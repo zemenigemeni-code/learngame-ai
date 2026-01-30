@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnGame AI - Преобразуем учебники в игры</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-robot"></i> LearnGame AI</h1>
+            <p class="tagline">Загрузи учебный материал — получи интерактивную игру</p>
+        </header>
+
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <h3>Перетащи сюда PDF-файл или нажми для выбора</h3>
+            <p>Поддерживаются учебники, конспекты, статьи (до 10 страниц)</p>
+            <input type="file" id="fileInput" accept=".pdf">
+            <br><br>
+            <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-upload"></i> Выбрать файл
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <h3>Анализируем материал...</h3>
+            <p>ИИ выделяет персонажей, события и локации. Это займет 10-20 секунд.</p>
+        </div>
+
+        <div class="result" id="result">
+            <h2><i class="fas fa-chart-bar"></i> Результат анализа</h2>
+            <div id="structuredData">
+                <!-- Сюда вставим данные из ИИ -->
+            </div>
+        </div>
+
+        <footer>
+            <p><i class="fas fa-graduation-cap"></i> LearnGame AI MVP • Преобразуем скучные учебники в захватывающие
+                игры</p>
+            <p><i class="fas fa-brain"></i> Использует Groq AI & Llama 3.1 • 2024</p>
+        </footer>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
