@@ -177,7 +177,14 @@ class LearningEngine:
         flashcards = self._create_flashcards()
         test = self._create_test()
         markdown = self._export_markdown()
-        stats = self._get_stats()
+        stats = {
+            "total_characters": len(self.data.get("characters", [])),
+            "total_events": len(self.data.get("events", [])),
+            "total_flashcards": len(flashcards),  # 'flashcards' уже создан выше
+            "total_questions": (
+                len(self.test_questions) if hasattr(self, "test_questions") else 0
+            ),
+        }
         # 1. Анализируем тип контента
         content_analysis = self.analyze_content_structure()
         print(f"[ENGINE] Тип контента: {content_analysis.get('primary_type')}")
