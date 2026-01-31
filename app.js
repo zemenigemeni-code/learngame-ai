@@ -163,6 +163,7 @@ function displayStructuredData(data) {
             <button class="mat-tab" onclick="showMatTab('test')">
                 <i class="fas fa-question-circle"></i> Тест
             </button>
+            <button class="mat-tab" onclick="showMatTab('narrative')">🎭 Сюжет</button>
             <button class="mat-tab" onclick="showMatTab('export')">
                 <i class="fas fa-download"></i> Экспорт
             </button>
@@ -280,6 +281,54 @@ function displayStructuredData(data) {
                 <button onclick="printMarkdown()">
                     <i class="fas fa-print"></i> Печать
                 </button>
+        <div id="narrativeTab" class="mat-content">
+            <h2>🎭 Сюжет и диалоги</h2>
+            
+            ${data.specialized_content?.narrative ? `
+                <!-- Сюжет -->
+                <div class="section">
+                    <h3>📖 Краткий сюжет</h3>
+                    <p>${data.specialized_content.narrative.story}</p>
+                </div>
+                
+                <!-- Диалог -->
+                <div class="section">
+                    <h3>💬 Диалог между персонажами</h3>
+                    <p><strong>Участники:</strong> ${data.specialized_content.narrative.dialog.participants.join(' и ')}</p>
+                    <div class="dialog">
+                        ${data.specialized_content.narrative.dialog.lines.map(line => `
+                            <div class="dialog-line">
+                                <strong>${line.speaker}:</strong> ${line.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Интерактивные вопросы -->
+                <div class="section">
+                    <h3>❓ Интерактивные вопросы</h3>
+                    ${data.specialized_content.narrative.interactive_questions.map((q, index) => `
+                        <div class="question">
+                            <h4>Вопрос ${index + 1}: ${q.question}</h4>
+                            <div class="options">
+                                ${q.options.map((opt, optIndex) => `
+                                    <label>
+                                        <input type="radio" name="narrative_q${index}" value="${optIndex}">
+                                        ${opt}
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                    <button onclick="checkNarrativeAnswers()" class="submit-btn">Проверить ответы</button>
+                </div>
+            ` : `
+                <!-- Если нарративного контента нет -->
+                <div class="section">
+                    <p>Для этого материала нарративный контент не был сгенерирован.</p>
+                    <p><strong>Тип контента:</strong> ${data.content_analysis?.primary_type || 'Не определен'}</p>
+                </div>
+            `}
             </div>
         </div>
     `;
@@ -435,12 +484,31 @@ function printMarkdown() {
                 <h1>Учебный материал - LearnGame AI</h1>
                 <pre>${content}</pre>
             </body>
+        
         </html>
     `);
     printWindow.document.close();
     printWindow.print();
 }
+function checkNarrativeAnswers() {
+    let correct = 0;
+    const questions = document.querySelectorAll('#narrativeTab .question');
 
+    questions.forEach((q, index) => {
+        const selected = q.querySelector('input:checked');
+        // Используем window.data, который создается в displayStructuredData
+        const correctIndex = window.data?.specialized_content?.narrative?.interactive_questions?.[index]?.correct;
+
+        if (selected && parseInt(selected.value) === correctIndex) {
+            correct++;
+            q.style.background = 'rgba(76, 201, 240, 0.1)';
+        } else if (selected) {
+            q.style.background = 'rgba(247, 37, 133, 0.1)';
+        }
+    });
+
+    showNotification(`Правильных ответов: ${correct} из ${questions.length}`, 'success');
+}
 // Расширенные игровые форматы
 function showAdvancedOptions(contentType) {
     let message = `🎮 ИГРОВЫЕ ФОРМАТЫ ДЛЯ ${contentType}\n\n`;

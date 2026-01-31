@@ -96,16 +96,115 @@ class LearningEngine:
         # Фолбэк
         return ["Другой персонаж", "Второстепенная роль", "Неизвестная роль"]
 
+    def create_narrative_content(self) -> Dict:
+        """
+        Создает специализированные материалы для нарративов (историй, мифов, биографий).
+        Возвращает словарь со сюжетом, диалогом и интерактивными вопросами.
+        """
+        if not self.groq_client:
+            return {"error": "Groq client not available"}
+
+        # Подготавливаем данные для промпта
+        characters = self.data.get("characters", [])[:5]
+        events = self.data.get("events", [])[:5]
+        locations = self.data.get("locations", [])[:3]
+
+        prompt = f"""
+        Ты — сценарист образовательной игры. На основе предоставленных данных создай увлекательный контент.
+
+        ИСХОДНЫЕ ДАННЫЕ:
+        Персонажи: {[c.get('name', '?') for c in characters]}
+        События: {[e.get('name', '?') for e in events]}
+        Локации: {[l.get('name', '?') for l in locations]}
+
+        ЗАДАНИЕ:
+        1. **Придумай краткий сюжет** (3-5 предложений), связывающий ключевые элементы.
+        2. **Создай диалог** между двумя главными персонажами (4-6 реплик).
+        3. **Составь 2 интерактивных вопроса** по сюжету с вариантами ответов.
+
+        ВАЖНО: Верни ТОЛЬКО валидный JSON без каких-либо пояснений.
+
+        ФОРМАТ JSON:
+        {{
+        "story": "краткий сюжет здесь",
+        "dialog": {{
+            "participants": ["персонаж1", "персонаж2"],
+            "lines": [
+            {{"speaker": "персонаж1", "text": "реплика1"}},
+            {{"speaker": "персонаж2", "text": "реплика2"}}
+            ]
+        }},
+        "interactive_questions": [
+            {{
+            "question": "текст вопроса 1",
+            "options": ["вариант1", "вариант2", "вариант3", "вариант4"],
+            "correct": 0
+            }},
+            {{
+            "question": "текст вопроса 2",
+            "options": ["вариант1", "вариант2", "вариант3", "вариант4"],
+            "correct": 2
+            }}
+        ]
+        }}
+        """
+
+        try:
+            chat_completion = self.groq_client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.3-70b-versatile",
+                temperature=0.7,
+                max_tokens=1500,
+            )
+
+            response = chat_completion.choices[0].message.content
+
+            # Парсим JSON (убираем возможные markdown-обрамления)
+            import re
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            else:
+                return {"error": "Could not parse JSON from response"}
+
+        except Exception as e:
+            return {"error": f"Groq API error: {str(e)}"}
+
     def create_all_materials(self) -> Dict[str, Any]:
         """Создаёт ВСЕ материалы за один вызов."""
         print("[ENGINE] Создаю все обучающие материалы...")
 
+        # === СУЩЕСТВУЮЩИЙ КОД (не меняем) ===
+        study_guide = self._create_study_guide()
+        flashcards = self._create_flashcards()
+        test = self._create_test()
+        markdown = self._export_markdown()
+        stats = self._get_stats()
+        # 1. Анализируем тип контента
+        content_analysis = self.analyze_content_structure()
+        print(f"[ENGINE] Тип контента: {content_analysis.get('primary_type')}")
+
+        # 2. Создаём специализированный контент, если это NARRATIVE
+        specialized_content = {}
+        if content_analysis.get("primary_type") == "NARRATIVE":
+            print("[ENGINE] Создаю нарративный контент...")
+            narrative_result = self.create_narrative_content()
+            # Проверяем, что создание прошло без ошибок
+            if isinstance(narrative_result, dict) and "error" not in narrative_result:
+                specialized_content["narrative"] = narrative_result
+            else:
+                # Если ошибка, можно записать её или оставить specialized_content пустым
+                print(f"[WARNING] Не удалось создать нарратив: {narrative_result}")
         return {
-            "study_guide": self._create_study_guide(),
-            "flashcards": self._create_flashcards(),
-            "test": self._create_test(),
-            "markdown": self._export_markdown(),
-            "stats": self._get_stats(),
+            "study_guide": study_guide,
+            "flashcards": flashcards,
+            "test": test,
+            "markdown": markdown,
+            "stats": stats,
+            # Добавляем два новых поля в возвращаемый результат
+            "content_analysis": content_analysis,
+            "specialized_content": specialized_content,
         }
 
     def _create_study_guide(self) -> Dict:
