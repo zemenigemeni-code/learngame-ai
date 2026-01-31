@@ -29,7 +29,7 @@ print(f"📁 Папка существует: {FRONTEND_DIR.exists()}")
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # Инициализируем клиент Groq
-client = Groq(")
+client = Groq(api_key="")
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
@@ -109,6 +109,7 @@ async def upload_file(file: UploadFile = File(...)):
 
     try:
         # Сохраняем файл
+        print(f"=== НАЧАЛО ОБРАБОТКИ ФАЙЛА {file.filename} ===")
         file_path = f"materials/{file.filename}"
         os.makedirs("materials", exist_ok=True)
 
@@ -135,7 +136,7 @@ async def upload_file(file: UploadFile = File(...)):
         engine = LearningEngine(structured_data, text, client)
         content_analysis = engine.analyze_content_structure()
 
-        print(f"📊 Результат анализа: {content_analysis}")
+        print(f"📊 Результат анализа типа: {content_analysis}")
 
         # Создаём обучающие материалы
         print("🎮 Создаю обучающие материалы...")
@@ -145,7 +146,7 @@ async def upload_file(file: UploadFile = File(...)):
             "filename": file.filename,
             "text_preview": text[:500] + "...",
             "structured_data": structured_data,
-            "content_analysis": content_analysis,
+            "content_analysis": all_materials.get("content_analysis", {}),
             "all_materials": all_materials,
             "status": "success",
         }
@@ -159,20 +160,20 @@ async def upload_file(file: UploadFile = File(...)):
 async def main():
     """Главная страница с фронтендом."""
     from pathlib import Path
-    
+
     # Правильный путь к index.html
     BASE_DIR = Path(__file__).parent.parent
     index_path = BASE_DIR / "frontend" / "index.html"
-    
+
     print(f"📁 Ищу index.html по пути: {index_path}")
     print(f"📁 Файл существует: {index_path.exists()}")
-    
+
     if not index_path.exists():
         return HTMLResponse(
             "<h1>Ошибка</h1><p>Файл index.html не найден.</p>"
             f"<p>Путь: {index_path}</p>"
         )
-    
+
     try:
         with open(index_path, "r", encoding="utf-8") as f:
             html_content = f.read()
@@ -185,5 +186,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
