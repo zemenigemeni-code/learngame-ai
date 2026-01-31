@@ -29,7 +29,7 @@ print(f"📁 Папка существует: {FRONTEND_DIR.exists()}")
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # Инициализируем клиент Groq
-client = Groq(api_key="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")
+client = Groq(")
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
@@ -185,3 +185,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
